@@ -1,6 +1,6 @@
 # Gearbox Filter Fouling Detection API
 
-This API provides tools for managing and analyzing wind farms and wind turbines. It consists of multiple controllers, each with specific functionalities designed to streamline operations and enhance anomaly detection.
+This API provides tools for managing and analyzing wind farms and wind turbines. It consists of multiple controllers, each with specific functionalities designed to streamline operations and enhance gearbox anomaly detection.
 
 ## Endpoints
 
