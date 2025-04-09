@@ -34,7 +34,7 @@ This API provides tools for managing and analyzing wind farms and wind turbines.
   - `windTurbineId ` (required): The ID of the wind turbine to analyze.
   - `data` (required): The SCADA data file for the turbine.
   - `aggregator` (required): The period for prediction (`week` or `month`).
-- **Description**: This endpoint provides anomaly predictions to identify potential issues before they escalate.
+- **Description**: This endpoint provides filter fouling predictions (between 0 and 1).
 
 ---
 
