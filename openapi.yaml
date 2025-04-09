@@ -1,0 +1,300 @@
+openapi: 3.0.1
+info:
+  title: API for Gearbox Exchanger Fouling Detection
+  contact:
+    name: EnerShare API Support
+    email: java.platform.support@engie.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+
+servers:
+- url: /
+  description: Local server
+
+paths:
+  '/windTurbines':
+    get:
+      tags:
+        - Wind turbine controller
+      summary: List of WindTurbines
+      description: >-
+        List of available wind turbines along with their models.
+      operationId: wind_turbines_list
+      parameters:
+        - name: WindTurbineId_prefix
+          in: query
+          description: >-
+            OPTIONAL. Filter the list to include wind turbine names that match the specified prefix. If left unspecified, no filtering based on wind turbine names will be applied.
+          schema:
+            type: string
+        - name: parcName_prefix
+          in: query
+          description: >-
+            OPTIONAL. Filter the list to include parc names that match with the specified prefix. If left unspecified, no filtering based on parc names will be applied.
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          description: |-
+            OPTIONAL. Number of wind turbine to return in one page.
+            Must be less than 1000. Defaults to 25.
+          schema:
+            type: integer
+            format: int64
+        - name: page_offset
+          in: query
+          description: >-
+            OPTIONAL. Page offset is used to retrieve the next page of results.
+            If unspecified, returns the first page of results. 
+            Defaults to 0.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WindTurbinesResponse'
+      x-openapi-router-controller: src.controllers.wind_turbine_controller
+  '/parcs':
+    get:
+      tags:
+        - Parc controller
+      summary: List of wind turbine parcs
+      description: >-
+        List of wind turbine parcs.
+
+      operationId: parcs_list
+      parameters:
+        - name: page_size
+          in: query
+          description: |-
+            OPTIONAL. Number of wind turbine to return in one page.
+            Must be less than 1000. Defaults to 25.
+          schema:
+            type: integer
+            format: int64
+        - name: page_offset
+          in: query
+          description: >-
+            OPTIONAL. Page offset is used to retrieve the next page of results.
+            If unspecified, returns the first page of results. 
+            Defaults to 0.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: 'List of parcs'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParcNamesResponse'
+        '404':
+          description: 'Not found error.'
+      x-openapi-router-controller: src.controllers.parc_controller
+  '/windTurbine':
+    parameters:
+      - $ref: '#/components/parameters/queryWindTurbineId'
+      - $ref: '#/components/parameters/queryParcName'
+    post:
+      tags:
+        - Admin controller
+      summary: Add a new wind turbine and upload a model for it (Admin endpoint).
+      description: |-
+        The model file uploaded must be in the 'pickle' format with the '.pkl' extension.
+      operationId: add_wind_turbine
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WindTurbineModel'
+      responses:
+        '201':
+          description: 'Successfully upload Model'
+        '404':
+          description: 'Not found error'
+        '500':
+          description: 'Error occurred when invoking resource.'
+      x-openapi-router-controller: src.controllers.admin_controller
+
+  '/windTurbine/{windTurbineId}':
+    delete:
+      tags:
+        - Admin controller
+      summary: Delete the wind turbine along with its model (Admin endpoint).
+      description: |-
+
+      operationId: delete_wind_turbine
+      parameters:
+        - $ref: '#/components/parameters/windTurbineId'
+      responses:
+        '204':
+          description: 'Successfully deleted Wind turbine'
+        '404':
+          description: 'File Not found'
+        '500':
+          description: 'Error occurred when invoking resource.'
+      x-openapi-router-controller: src.controllers.admin_controller
+
+    put:
+      tags:
+        - Admin controller
+      summary: Modify the model of a wind turbine (Admin endpoint).
+      description: |-
+        Modify the model of a wind turbine (the old model will be overwritten).
+        The uploaded model file must be in the 'pickle' format with the '.pkl' extension.
+      operationId: update_wind_turbine
+      parameters:
+        - $ref: '#/components/parameters/windTurbineId'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WindTurbineModel'
+      responses:
+        '201':
+          description: 'Successfully updated Model'
+        '404':
+          description: 'File Not found'
+        '500':
+          description: 'Error occurred when invoking resource.'
+      x-openapi-router-controller: src.controllers.admin_controller
+
+  '/predict/{windTurbineId}':
+    post:
+      tags:
+       - Predict controller
+      summary: Launch the anomaly detection service
+      description: |-
+        Launch the anomaly detection service.
+      operationId: predict
+      parameters:
+        - $ref: '#/components/parameters/windTurbineId'
+        - $ref: '#/components/parameters/queryAggregatorEnum'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: string
+                  format: binary
+                  description: | 
+                      This CSV file contains raw data from wind turbines, serving as the foundation for predicting gearbox filter anomaly probabilities for each X unit of time, where X = aggregator param.
+              required:
+                - data
+      responses:
+        '200':
+            description: |
+              Success. The output is in CSV format, presenting the probability of failure for each X unit of time, where X is aggregated based on the input parameter (WEEK or MONTH), covering the baseline interval of the input data file. The file header includes the following columns: year, step, prob_failure. Here, the step column represents the week or month number within the year, depending on the chosen aggregation input.
+            content:
+              text/csv:
+                schema:
+                  type: string
+        '404':
+          description: 'Model file Not found (pickel)'
+        '500':
+          description: 'Error occurred when invoking resource.'
+      x-openapi-router-controller: src.controllers.predict_controller
+
+
+components:
+  parameters:
+    windTurbineId:
+      name: windTurbineId
+      in: path
+      description: |
+        The exact name/ID of the wind turbine.
+      required: true
+      schema:
+        $ref: '#/components/schemas/NameType'
+    queryWindTurbineId:
+      in: query
+      name: windTurbineId
+      required: true
+      schema:
+        type: string
+    queryParcName:
+      in: query
+      name: parcName
+      required: true
+      schema:
+        type: string
+    queryAggregatorEnum:
+      in: query
+      name: aggregator
+      description: |
+        Aggregator is an enumeration that specifies the available aggregation options for different time periods.Possible values are "WEEK" and "MONTH".
+          Defaults to "MONTH".
+      schema:
+        $ref: '#/components/schemas/AggregatorEnum'
+
+  schemas:
+    ParcNamesResponse:
+      type: object
+      description: List of parc names.
+      properties:
+        parcs:
+          type: array
+          description: |-
+            List of wind Turbines parc names.
+          items:
+            type: string
+    WindTurbinesResponse:
+      type: object
+      description: WindTurbinesResponse describes a response from the wind turbine endpoint.
+      properties:
+        windTurbines:
+          type: array
+          description: |-
+            List of windTurbine.
+          items:
+            $ref: '#/components/schemas/WindTurbine'
+
+    WindTurbine:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Name/ID of the wind turbine"
+        model:
+          type: string
+          description: "Model pickel of the wind turbine"
+        parc:
+          type: string
+          description: "Parc name to which a wind turbine belongs"
+
+    WindTurbineModel:
+      type: object
+      properties:
+        model:
+          type: string
+          format: binary
+      required:
+        - model
+
+    predictResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          format: binary
+
+    AggregatorEnum:
+      type: string
+      enum:
+        - WEEK
+        - MONTH
+      default: 'MONTH'
+
+    NameType:
+      type: string
+      description: |
+        Resource name.
