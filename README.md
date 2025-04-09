@@ -40,7 +40,7 @@ This API provides tools for managing and analyzing wind farms and wind turbines.
 
 ## Usage
 
-Each endpoint is designed to address specific needs related to wind farm and turbine management. For detailed usage instructions and parameter requirements, refer to the yaml documentation.
+Each endpoint is designed to address specific needs related to wind farm and turbine management. For detailed usage instructions and parameter requirements, refer to the yaml documentation. For better clarity, you can copy the content of the YAML file into https://editor.swagger.io/.
 
 ---
 
