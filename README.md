@@ -7,8 +7,6 @@ This API provides tools for managing and analyzing wind farms and wind turbines.
 ### 1. Wind Turbine Controller
 - **Purpose**: Lists all wind turbines within a specific wind farm.
 - **Endpoint**: `/windTurbines`
-- **Parameters**:
-  - `parcName_prefix` (required): The ID of the wind farm to retrieve the list of turbines.
 
 ---
 
